@@ -1,0 +1,116 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+}
+
+.container {
+    width: 90%;
+    max-width: 1000px;
+    margin: 40px auto;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.add-btn {
+    display: inline-block;
+    padding: 10px 18px;
+    background: #2563eb;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    margin-bottom: 25px;
+}
+
+.placement-card {
+    background: white;
+    padding: 22px;
+    margin-bottom: 18px;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.10);
+}
+
+.placement-card h2 {
+    margin-top: 0;
+    color: #2563eb;
+}
+
+.placement-card p {
+    margin: 10px 0;
+    line-height: 1.5;
+}
+
+.back-btn {
+    display: inline-block;
+    margin-top: 20px;
+    color: #2563eb;
+    text-decoration: none;
+}
+
+/* Add / Edit Placement Form */
+
+form {
+    background: white;
+    width: 55%;
+    max-width: 600px;
+    margin: 30px auto;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+}
+
+form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+}
+
+form input,
+form select {
+    display: block;
+    width: 100%;
+    height: 42px;
+    padding: 8px 12px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 15px;
+}
+
+form input:focus,
+form select:focus {
+    border-color: #2563eb;
+    outline: none;
+}
+
+form button {
+    width: 100%;
+    height: 45px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+form button:hover {
+    background: #1d4ed8;
+}
+
+.back-btn {
+    display: block;
+    width: fit-content;
+    margin: 20px auto;
+    color: #2563eb;
+    text-decoration: none;
+}
+
+.back-btn:hover {
+    text-decoration: underline;
+}
