@@ -13,4 +13,8 @@ urlpatterns = [
 
     # Reports API
     path('reports/api/', views.reports_api, name='reports_api'),
+    
+    # Job Applications API
+    path('applications/api/', views.job_application_api, name='job_application_api'),
+
 ]

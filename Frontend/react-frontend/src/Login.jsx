@@ -1,12 +1,12 @@
 import "./Auth.css";
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -18,6 +18,7 @@ function Login() {
         "http://127.0.0.1:8000/accounts/login/",
         {
           method: "POST",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
           },
@@ -27,11 +28,16 @@ function Login() {
 
       const data = await response.json();
 
-        if (response.ok) {
+      if (response.ok) {
         localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("username", data.username);
+        sessionStorage.setItem("csrfToken", data.csrfToken);
+
         setMessage("Login successful!");
         navigate("/dashboard");
-        }
+      } else {
+        setMessage(data.error || "Login failed. Please try again.");
+      }
     } catch {
       setMessage("Backend connect aagala. Django server check pannunga.");
     }
@@ -39,9 +45,9 @@ function Login() {
 
   return (
     <div className="auth-container">
-      <h2>Login</h2>
+      <form className="auth-form" onSubmit={handleLogin}>
+        <h2>Login</h2>
 
-      <form onSubmit={handleLogin}>
         <input
           type="text"
           placeholder="Username"
@@ -59,11 +65,13 @@ function Login() {
         />
 
         <button type="submit">Login</button>
-      </form>
+
+        <p>{message}</p>
+
         <p>
-            Don't have an account? <Link to="/signup">Sign Up</Link>
+          Don't have an account? <Link to="/signup">Signup</Link>
         </p>
-      <p>{message}</p>
+      </form>
     </div>
   );
 }

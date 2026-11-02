@@ -2,10 +2,10 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 
-from .models import Placement, Requirement, Interview
+from .models import Placement, Requirement, Interview, JobApplication
 from students.models import Student
 from companies.models import Company
-
+from django.contrib.auth.models import User
 
 # =========================
 # PLACEMENT API
@@ -192,13 +192,16 @@ def requirement_api(request):
 # INTERVIEW API
 # =========================
 
+
 @csrf_exempt
 def interview_api(request):
 
-    # GET
+    # GET - View all interviews
     if request.method == "GET":
 
-        interviews = Interview.objects.all()
+        interviews = Interview.objects.select_related(
+            "student", "company"
+        ).all()
 
         data = []
 
@@ -206,7 +209,9 @@ def interview_api(request):
             data.append({
                 "id": interview.id,
                 "student": interview.student.name,
+                "student_id": interview.student.id,
                 "company": interview.company.company_name,
+                "company_id": interview.company.id,
                 "job_role": interview.job_role,
                 "interview_date": str(interview.interview_date),
                 "interview_time": str(interview.interview_time),
@@ -217,52 +222,111 @@ def interview_api(request):
         return JsonResponse(data, safe=False)
 
 
-    # POST
+    # POST - Create new interview
     elif request.method == "POST":
 
-        body = json.loads(request.body)
+        try:
+            body = json.loads(request.body)
 
-        student = Student.objects.get(id=body.get("student"))
-        company = Company.objects.get(id=body.get("company"))
+            student = Student.objects.get(id=body.get("student"))
+            company = Company.objects.get(id=body.get("company"))
 
-        interview = Interview.objects.create(
-            student=student,
-            company=company,
-            job_role=body.get("job_role"),
-            interview_date=body.get("interview_date"),
-            interview_time=body.get("interview_time"),
-            mode=body.get("mode"),
-            status=body.get("status"),
-        )
+            interview = Interview.objects.create(
+                student=student,
+                company=company,
+                job_role=body.get("job_role"),
+                interview_date=body.get("interview_date"),
+                interview_time=body.get("interview_time"),
+                mode=body.get("mode"),
+                status=body.get("status", "Scheduled"),
+            )
 
-        return JsonResponse({
-            "message": "Interview created successfully",
-            "id": interview.id
-        }, status=201)
+            return JsonResponse({
+                "message": "Interview created successfully",
+                "id": interview.id
+            }, status=201)
+
+        except Student.DoesNotExist:
+            return JsonResponse({"error": "Student not found"}, status=404)
+
+        except Company.DoesNotExist:
+            return JsonResponse({"error": "Company not found"}, status=404)
+
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return JsonResponse({"error": "Invalid interview data"}, status=400)
 
 
-    # DELETE
-    elif request.method == "DELETE":
-
-        body = json.loads(request.body)
+    # PUT - Update interview
+    elif request.method == "PUT":
 
         try:
+            body = json.loads(request.body)
+
             interview = Interview.objects.get(id=body.get("id"))
+
+            if "student" in body:
+                interview.student = Student.objects.get(id=body["student"])
+
+            if "company" in body:
+                interview.company = Company.objects.get(id=body["company"])
+
+            interview.job_role = body.get("job_role", interview.job_role)
+            interview.interview_date = body.get(
+                "interview_date", interview.interview_date
+            )
+            interview.interview_time = body.get(
+                "interview_time", interview.interview_time
+            )
+            interview.mode = body.get("mode", interview.mode)
+            interview.status = body.get("status", interview.status)
+
+            interview.save()
+
+            return JsonResponse({
+                "message": "Interview updated successfully"
+            })
+
+        except Interview.DoesNotExist:
+            return JsonResponse({"error": "Interview not found"}, status=404)
+
+        except Student.DoesNotExist:
+            return JsonResponse({"error": "Student not found"}, status=404)
+
+        except Company.DoesNotExist:
+            return JsonResponse({"error": "Company not found"}, status=404)
+
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return JsonResponse({"error": "Invalid interview data"}, status=400)
+
+
+    # DELETE - Delete interview
+    elif request.method == "DELETE":
+
+        try:
+            body = json.loads(request.body)
+
+            interview = Interview.objects.get(id=body.get("id"))
+            interview.delete()
+
+            return JsonResponse({
+                "message": "Interview deleted successfully"
+            })
+
         except Interview.DoesNotExist:
             return JsonResponse({
                 "error": "Interview not found"
             }, status=404)
 
-        interview.delete()
-
-        return JsonResponse({
-            "message": "Interview deleted successfully"
-        })
+        except json.JSONDecodeError:
+            return JsonResponse({
+                "error": "Invalid JSON data"
+            }, status=400)
 
 
     return JsonResponse({
         "error": "Method not allowed"
     }, status=405)
+
 
 
 # =========================
@@ -280,4 +344,101 @@ def reports_api(request):
     }
 
     return JsonResponse(data)
+
+
+@csrf_exempt
+def job_application_api(request):
+    if request.method == "GET":
+        applications = JobApplication.objects.select_related(
+            "student", "requirement", "requirement__company"
+        ).all()
+
+        data = []
+
+        for application in applications:
+            data.append({
+                "id": application.id,
+                "student_id": application.student.id,
+                "student": application.student.name,
+                "requirement_id": application.requirement.id,
+                "job_role": application.requirement.job_role,
+                "company": application.requirement.company.company_name,
+                "applied_date": application.applied_date.isoformat(),
+                "status": application.status,
+            })
+
+        return JsonResponse(data, safe=False)
+
+    elif request.method == "POST":
+        try:
+            body = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse(
+                {"error": "Invalid JSON data"},
+                status=400
+            )
+
+        username = body.get("username", "").strip()
+        requirement_id = body.get("requirement_id")
+
+        if not username or not requirement_id:
+            return JsonResponse(
+                {"error": "Username and requirement_id are required"},
+                status=400
+            )
+
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return JsonResponse(
+                {"error": "User account not found"},
+                status=404
+            )
+
+        try:
+            student = Student.objects.get(email=user.email)
+        except Student.DoesNotExist:
+            return JsonResponse(
+                {
+                    "error": (
+                        "Student profile not found for this account email. "
+                        "Please check the registered email in the Students page."
+                    )
+                },
+                status=400
+            )
+
+        try:
+            requirement = Requirement.objects.get(id=requirement_id)
+        except Requirement.DoesNotExist:
+            return JsonResponse(
+                {"error": "Job requirement not found"},
+                status=404
+            )
+
+        if JobApplication.objects.filter(
+            student=student,
+            requirement=requirement
+        ).exists():
+            return JsonResponse(
+                {"error": "You have already applied for this job"},
+                status=409
+            )
+
+        application = JobApplication.objects.create(
+            student=student,
+            requirement=requirement,
+        )
+
+        return JsonResponse({
+            "message": "Application submitted successfully",
+            "id": application.id,
+            "status": application.status,
+        }, status=201)
+
+    return JsonResponse(
+        {"error": "Method not allowed"},
+        status=405
+    )
+
 # Create your views here.

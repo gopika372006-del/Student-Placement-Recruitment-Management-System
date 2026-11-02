@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import "./Companies.css";
 
@@ -10,7 +11,7 @@ function Companies() {
   const [message, setMessage] = useState("");
 
   const [formData, setFormData] = useState({
-    name: "",
+    company_name: "",
     email: "",
     phone: "",
   });
@@ -18,7 +19,9 @@ function Companies() {
   const fetchCompanies = async () => {
     try {
       const response = await fetch(API_URL);
-      if (!response.ok) throw new Error("Failed to fetch companies");
+      if (!response.ok) {
+        throw new Error("Failed to fetch companies");
+      }
 
       const data = await response.json();
       setCompanies(data);
@@ -50,7 +53,11 @@ function Companies() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          company_name: formData.company_name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+        }),
       });
 
       const data = await response.json();
@@ -66,7 +73,12 @@ function Companies() {
         return;
       }
 
-      setFormData({ name: "", email: "", phone: "" });
+      setFormData({
+        company_name: "",
+        email: "",
+        phone: "",
+      });
+
       setShowForm(false);
       setMessage("Company added successfully!");
       await fetchCompanies();
@@ -107,7 +119,9 @@ function Companies() {
     <div className="companies-page">
       <header className="companies-header">
         <div>
-          <span className="companies-eyebrow">PLACEMENT MANAGEMENT SYSTEM</span>
+          <span className="companies-eyebrow">
+            PLACEMENT MANAGEMENT SYSTEM
+          </span>
           <h1>Company Management</h1>
           <p>Manage recruitment partners and company information.</p>
         </div>
@@ -118,6 +132,7 @@ function Companies() {
           </span>
 
           <button
+            type="button"
             className="add-company-btn"
             onClick={() => {
               setMessage("");
@@ -141,9 +156,9 @@ function Companies() {
 
           <div className="company-form-grid">
             <input
-              name="name"
+              name="company_name"
               placeholder="Company name"
-              value={formData.name}
+              value={formData.company_name}
               onChange={handleChange}
               required
             />
@@ -166,7 +181,11 @@ function Companies() {
             />
           </div>
 
-          <button className="save-company-btn" type="submit" disabled={loading}>
+          <button
+            className="save-company-btn"
+            type="submit"
+            disabled={loading}
+          >
             {loading ? "Saving..." : "Save Company"}
           </button>
         </form>
@@ -184,13 +203,15 @@ function Companies() {
             <article className="company-card" key={company.id}>
               <div className="company-card-header">
                 <div className="company-avatar">
-                  {(company.name || company.company_name || "C")
+                  {(company.company_name || company.name || "C")
                     .charAt(0)
                     .toUpperCase()}
                 </div>
 
                 <div className="company-title">
-                  <h2>{company.name || company.company_name || "Company"}</h2>
+                  <h2>
+                    {company.company_name || company.name || "Company"}
+                  </h2>
                   <p>Company ID: {company.id}</p>
                 </div>
               </div>
@@ -210,6 +231,7 @@ function Companies() {
                 <span className="company-status">Recruitment Partner</span>
 
                 <button
+                  type="button"
                   className="delete-company-btn"
                   onClick={() => handleDeleteCompany(company.id)}
                 >
@@ -225,3 +247,4 @@ function Companies() {
 }
 
 export default Companies;
+

@@ -60,9 +60,9 @@ def signup(request):
 
 
 
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login as auth_login
+from django.middleware.csrf import get_token
 from django.views.decorators.http import require_POST
-
 
 @csrf_exempt
 @require_POST
@@ -91,9 +91,17 @@ def login(request):
                 status=401
             )
 
+        # Create Django login session
+        auth_login(request, user)
+
+        # Generate CSRF token
+        csrf_token = get_token(request)
+
         return JsonResponse({
             "message": "Login successful",
-            "username": user.username
+            "username": user.username,
+            "email": user.email,
+            "csrfToken": csrf_token
         })
 
     except json.JSONDecodeError:

@@ -15,7 +15,7 @@ import Requirements from "./Requirements.jsx";
 import Interviews from "./Interviews.jsx";
 import Login from "./Login.jsx";
 import Signup from "./Signup.jsx";
-
+import JobNotifications from "./JobNotifications.jsx";
 import "./App.css";
 
 // ================= HOME PAGE =================
@@ -458,7 +458,12 @@ function Dashboard() {
         </div>
 
         <p className="sidebar-label">MAIN MENU</p>
-
+          <button
+            className="nav-item"
+            onClick={() => navigate("/job-notifications")}
+          >
+            <span>🔔</span> Job Notifications
+          </button>
         <nav className="dashboard-nav">
           <button className="nav-item active" onClick={() => navigate("/dashboard")}>
             <span>▦</span> Dashboard
@@ -598,6 +603,14 @@ function App() {
         />
 
         <Route
+          path="/job-notifications"
+          element={
+            <ProtectedRoute>
+              <JobNotifications />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/students"
           element={<Students />}
         />
@@ -633,6 +646,8 @@ function App() {
         />
       </Routes>
     </BrowserRouter>
+
+
   );
 }
 
